@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                //Ansible playbook in this repo under ansible directory
+                checkout scm
+            }
+        }
+
+        stage('Dry Run Ansible Playbook') {
+            steps {
+                script {
+                    // Ensure Ansible is in the PATH
+                    sh 'export PATH=$PATH:/path/to/ansible'
+
+                    // Run the playbook
+                    //check is to do the dry-run without any changes.
+                    sh '''
+                        cd ansible
+                        pwd
+                        ansible-playbook demomotd-role.yaml --check -v
+                    '''
+                }
+            }
+        }
+       stage('Run Ansible Playbook') {
+            steps {
+                script {
+                    // Ensure Ansible is in the PATH
+                    sh 'export PATH=$PATH:/path/to/ansible'
+                    //this step will run only dry run is successful.
+                    sh '''
+                        cd ansible
+                        pwd
+                        ansible-playbook demomotd-role.yaml -v
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Playbook executed successfully!'
+        }
+        failure {
+            echo 'Playbook execution failed!'
+        }
+    }
+}
